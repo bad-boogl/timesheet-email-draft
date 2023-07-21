@@ -1,0 +1,72 @@
+Option Explicit
+Option Base 1
+
+Sub SendTimesheetReminder()
+
+    Dim strGreeting As String
+
+    Dim dtThisThursday As Date
+    Dim strThisThursday As String
+    Dim strDaySfx As String
+
+    If Weekday(Date) = 5 Then
+        strThisThursday = CStr(Format(Date, "dddd, mmm d"))
+        dtThisThursday = Date
+    ElseIf Weekday(Date) < 5 Then
+        strThisThursday = CStr(Format(Date + 5 - Weekday(Date), "dddd, mmm d"))
+        dtThisThursday = Date + 5 - Weekday(Date)
+    Else:
+        MsgBox ("Out of Range")
+        Exit Sub
+    End If
+
+    If Format(Now, "hh") < 12 Then
+        strGreeting = "morning "
+    Else:
+        strGreeting = "afternoon "
+    End If
+
+    Select Case Format(dtThisThursday, "d")
+        Case 31
+            strDaySfx = "st"
+        Case 24 To 30
+            strDaySfx = "th"
+        Case 4 To 20
+            strDaySfx = "th"
+        Case 23, 3
+            strDaySfx = "rd"
+        Case 22, 2
+            strDaySfx = "nd"
+        Case 31, 21, 1
+            strDaySfx = "st"
+        Case Else
+            MsgBox ("Critical error. See script author.")
+            Exit Sub
+    End Select
+
+    Dim olApp As Outlook.Application
+    Dim olEmail As Outlook.MailItem
+
+    Set olApp = New Outlook.Application
+    Set olEmail = olApp.CreateItem(olMailItem)
+
+    With olEmail
+        .BodyFormat = olFormatHTML
+        .Display
+
+        .HTMLBody = _
+            "Good " & strGreeting & "everyone,<br><br>" & _
+            "Just a friendly reminder to please have your timecards VER by " & _
+            Format(strThisThursday, "dddd, mmmm d") & strDaySfx & " by noon.<br>" & _
+            "Please contact me if you should need any assistance.<br><br><br>" & _
+ _
+            "If you are already VER, thank you and please disregard.<br><br>" & _
+ _
+            "If you're not logged in through [REDACTED], you can get into " & _
+            "[REDACTED] using this link"
+
+        .To = ""
+        .Subject = "Friendly Reminder: Timesheets Due " & strThisThursday & strDaySfx & " -- 12pm MST"
+    End With
+
+End Sub
